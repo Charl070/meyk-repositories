@@ -3,13 +3,14 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import { ThemeProvider, useTheme } from './context/theme/ThemContext';
 import { RepositoryContext, useRepository, RepositoryProvider } from './context/repository/RepositoryContext';
-// import { Home, Splash } from './pages';
+import { QueryClientProvider, QueryClient } from 'react-query';
 import Splash from './pages/splash';
 import Home from './pages/home';
 
 
 function App() {
   const { theme } = useTheme();
+  const queryClient = new QueryClient();
 
   const [showSplash, setShowSplash] = useState(true);
 
@@ -24,7 +25,8 @@ function App() {
   return (
     <ThemeProvider>
       <RepositoryProvider>
-        <div className={`app ${theme}`}>
+        <QueryClientProvider client={queryClient} >
+          <div className={`app ${theme}`}>
         {showSplash && <Splash />}
         <Router>
           <Routes>
@@ -32,6 +34,8 @@ function App() {
           </Routes>
         </Router>
       </div>
+        </QueryClientProvider>
+        
       </RepositoryProvider>
       
     </ThemeProvider>
