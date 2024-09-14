@@ -1,16 +1,13 @@
 import React, { useState } from 'react';
 import { useQuery } from 'react-query';
 import { useNavigate } from 'react-router-dom';
-import { searchRepositories   
- } from '../../api';
-
- interface Data {
-   items: any[];
-   total_count: number;
-   incomplete_results: boolean;
- }
+import { searchRepositories } from '../../api';
+import Loader from '../../components/loader';
+import RepositoryItem from '../../components/repositoryItem'; 
+import SideNav from '../../components/sideNav'; // Assuming you use this component
 
 function Home() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
 
   const { data, isError, isLoading, refetch } = useQuery('search', () => searchRepositories(searchTerm), {
@@ -18,63 +15,82 @@ function Home() {
   });
 
   const handleSearch = () => {
-    if (searchTerm) {
-      refetch();
-    }
+    refetch();   
   };
 
+  const handleRepoClick = (repo: any) => {
+    navigate(`/repository/${repo.id}`, { state: { repo } });
+  };
+
+  const handleClearSearch = () => {
+    setSearchTerm('');
+    refetch();
+  };
+
+  const sideNavItems = [
+    { label: 'History', path: '/history' },
+    { label: 'Settings', path: '/settings' },
+    // Add more items as needed
+  ];
+
   return (
-    <div className="text-white min-h-screen bg-gray-950 flex flex-col items-center justify-center">
-      <h1 className="text-4xl font-bold mb-6">Myek Repositories</h1>
-      <div className="flex flex-col items-center w-full max-w-md">
-        <input
-          type="text"
-          placeholder="Search for repositories"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full px-4 py-2 mb-4 text-gray-900 bg-gray-200 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <button
-          onClick={handleSearch}
-          className="w-full px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 disabled:bg-gray-500"
-        >
-          Search
-        </button>
-        {isLoading && <p>Loading...</p>}
-      {isError && <p>Error fetching repositories</p>}
-      {data && (
-          <div className="mt-6 w-full">
-            {data.length > 0 ? (
-              <ul className="space-y-4">
-                {data.map((repo) => (
-                  <li
-                    key={repo.id}
-                    className="p-4 bg-gray-800 rounded-lg shadow-lg hover:bg-gray-700 cursor-pointer"
-                    //onClick={() => handleRepoClick(repo)}
-                  >
-                    <h2 className="text-xl font-semibold">{repo.name}</h2>
-                    <p className="text-gray-400">{repo.description || 'No description available'}</p>
-                    <div className="mt-2 flex space-x-4 text-gray-300">
-                      <span>Forks: {repo.forks_count}</span>
-                      <span>Stars: {repo.stargazers_count}</span>
-                      <span>Issues: {repo.open_issues_count}</span>
-                    </div>
-                    <a
-                      href={repo.html_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block mt-2 text-blue-500 hover:underline"
-                    >
-                      View on GitHub
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="mt-4 text-gray-400">No repositories found</p>
+    <div className="text-white min-h-screen flex bg-gradient-to-b from-gray-900 via-gray-950 to-green-900">
+      {/* Sidebar */}
+      <SideNav items={sideNavItems} />
+
+      {/* Main Content */}
+      <div className="flex-grow flex flex-col items-center justify-center">
+        {/* Centered Search Container */}
+        <div className="flex flex-col items-center w-full max-w-3xl mx-auto p-4">
+          <h1 className="text-5xl font-bold my-4">Welcome to <span className="bg-gradient-to-r from-green-600 to-green-800 px-2 py-1 rounded-md">Myek</span></h1>
+          <p className="text-gray-400 mb-8">Search, Explore, and Visualize GitHub Repositories</p>
+
+          {/* Search Input with Button Inside */}
+          <div className="w-full max-w-lg relative">
+            <input
+              type="text"
+              placeholder='Example: "python"'
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-4 py-3 pr-12 border border-gray-500 rounded-lg focus:outline-none focus:border-blue-500 bg-transparent text-gray-200"
+            />
+            {searchTerm && (
+              <button 
+                onClick={handleClearSearch}
+                className="absolute right-12 bg-transparent text-gray-600 hover:text-gray-800 p-2">
+                &#x2715; {/* Unicode character for 'X' */}
+              </button>
             )}
+            <button
+              onClick={handleSearch}
+              className="absolute right-1 top-1 bottom-1 bg-green-600 text-white px-4 rounded-md disabled:bg-gray-500"
+              disabled={!searchTerm}
+            >
+              {'>'}
+            </button>
           </div>
-        )}
+        </div>
+
+        {/* Search Results */}
+        <div className="w-full max-w-3xl mx-auto mt-6 px-4">
+          {isLoading && <div className='mt-6'><Loader /></div>}
+          {isError && <p>Error fetching repositories</p>}
+          {data && (
+            <div className="w-full space-y-4">
+              {data.length > 0 ? (
+                <ul className="space-y-4">
+                  {data.map((repo) => (
+                    <li key={repo.id}>
+                      <RepositoryItem repo={repo} onClick={() => handleRepoClick(repo)} />
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-4 text-center text-gray-400">No repositories found</p>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
