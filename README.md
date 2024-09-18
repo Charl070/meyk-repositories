@@ -2,7 +2,10 @@
 
 A GitHub Repository Explorer built using React, TypeScript, and Tailwind CSS. The application allows users to search for repositories, view detailed information about each repository, and analyze issues using visual data representation.
 
+
+
 ## Table of Contents
+- [Demo](#demo)
 - [Features](#features)
 - [Technologies](#technologies)
 - [Design Choices](#design-choices)
@@ -10,6 +13,8 @@ A GitHub Repository Explorer built using React, TypeScript, and Tailwind CSS. Th
 - [Installation](#installation)
 - [Usage](#usage)
 
+## Demo
+Check out the live demo of the application [https://main--charles-meyk.netlify.app/].
 
 ## Features
 - Search GitHub repositories by name
