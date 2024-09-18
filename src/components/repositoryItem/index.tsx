@@ -14,6 +14,7 @@ interface RepositoryItemProps {
   onClick: () => void;
 }
 
+
 const RepositoryItem: React.FC<RepositoryItemProps> = ({ repo, onClick }) => {
   return (
     <div

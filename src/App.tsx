@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClientProvider, QueryClient } from 'react-query';
-import { ThemeProvider, useTheme } from './context/theme/ThemContext';
-import { RepositoryProvider } from './context/repository/RepositoryContext';
+import { AppProvider } from './context/AppContext';
 import Splash from './pages/splash';
 import Home from './pages/home';
 import RepositoryDetails from './pages/repository/RepositoryDetails';
 
 function App() {
-  const { theme } = useTheme();
   const queryClient = new QueryClient();
   const [showSplash, setShowSplash] = useState(true);
 
@@ -21,16 +19,13 @@ function App() {
   }, []);
 
   return (
-    <ThemeProvider>
-      <RepositoryProvider>
+      <AppProvider>
         <QueryClientProvider client={queryClient}>
-          {/* Main gradient background */}
           <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-950 to-green-900">
-            {/* Conditionally render either the splash screen or the main app */}
             {showSplash ? (
               <Splash />
             ) : (
-              <div className={`app ${theme}`}>
+              <div className='app'>
                 <Router>
                   <Routes>
                     <Route path="/" element={<Home />} />
@@ -41,8 +36,7 @@ function App() {
             )}
           </div>
         </QueryClientProvider>
-      </RepositoryProvider>
-    </ThemeProvider>
+      </AppProvider>
   );
 }
 

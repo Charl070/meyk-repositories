@@ -1,119 +1,157 @@
-import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import React, { useState, useEffect, memo } from 'react';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from 'react-query';
-// import { fetchRepoDetails, fetchRepoIssues } from '../../api';
-// import { Pie } from 'react-chartjs-2';
-//import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
-
-//ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
-
-interface Repository {
-  id: number;
-  name: string;
-  full_name: string;
-  description: string | null;
-  forks_count: number;
-  stargazers_count: number;
-  open_issues_count: number;
-  html_url: string;
-}
+import { fetchRepositoryIssues } from '../../api';
+import Loader from '../../components/loader';
+import { VictoryPie } from 'victory';
+import { useAppContext } from '../../context/AppContext';
 
 interface Issue {
   id: number;
+  state: 'open' | 'closed';
   title: string;
-  state: string;
+  html_url: string;
 }
 
-function RepositoryDetails() {
-  const { state } = useLocation();
-  const repo = state?.repo as Repository;
 
-  const [issueState, setIssueState] = useState<'open' | 'closed'>('open');
+function RepositoryDetail() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { repositoryDetail, setRepositoryDetail, searchTerm } = useAppContext();
 
-//   const { data: repoDetails, isLoading: isRepoLoading, isError: isRepoError } = useQuery(
-//     ['repoDetails', repo.id],
-//     () => fetchRepoDetails(repo.id),
-//     { enabled: !!repo }
-//   );
+  const repo = location.state || repositoryDetail;
 
-//   const { data: issues, isLoading: isIssuesLoading, isError: isIssuesError } = useQuery(
-//     ['repoIssues', repo.id, issueState],
-//     () => fetchRepoIssues(repo.id, issueState),
-//     { enabled: !!repo }
-//   );
+  const [issuesState, setIssuesState] = useState<'open' | 'closed'>('open');
 
-//   useEffect(() => {
-//     if (issues) {
-//       // Logic to handle issues data
-//     }
-//   }, [issues]);
+  const { data: issuesData, isError: issuesError, isLoading: issuesLoading, refetch: refetchIssues } = useQuery(
+    ['repositoryIssues', repo.full_name],
+    () => fetchRepositoryIssues(repo.full_name || ''),
+    {
+      enabled: !!repo.full_name,
+    }
+  );
 
-//   const issueCounts = {
-//     open: issues?.filter((issue) => issue.state === 'open').length || 0,
-//     closed: issues?.filter((issue) => issue.state === 'closed').length || 0,
-//   };
+  useEffect(() => {
+    if (repo.full_name) {
+      refetchIssues();
+    }
+  }, [repo.full_name, refetchIssues]);
 
-//   const pieData = {
-//     labels: ['Open Issues', 'Closed Issues'],
-//     datasets: [{
-//       data: [issueCounts.open, issueCounts.closed],
-//       backgroundColor: ['#FF6384', '#36A2EB'],
-//     }],
-//   };
+  useEffect(() => {
+    setRepositoryDetail(repo);
+  }, [repo, setRepositoryDetail]);
 
-//   if (isRepoLoading) return <p>Loading repository details...</p>;
-//   if (isRepoError) return <p>Error loading repository details.</p>;
-//   if (isIssuesLoading) return <p>Loading issues...</p>;
-//   if (isIssuesError) return <p>Error loading issues.</p>;
+  const handleStateChange = (state: 'open' | 'closed') => {
+    setIssuesState(state);
+  };
 
   return (
-    <div className="text-white min-h-screen p-6">
-      <button
-        onClick={() => window.history.back()}
-        className="text-blue-500 hover:underline mb-4"
-      >
-        &larr; Back to search
-      </button>
-      <h1 className="text-3xl font-bold mb-4">{repo?.name}</h1>
-      <p className="text-gray-400 mb-4">{repo?.description || 'No description available'}</p>
-      <p className="mb-4">Forks: {repo?.forks_count}</p>
-      <p className="mb-4">Stars: {repo?.stargazers_count}</p>
-      <p className="mb-4">Open Issues: {repo?.open_issues_count}</p>
-      <a
-        href={repo?.html_url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-blue-500 hover:underline"
-      >
-        View on GitHub
-      </a>
-      <div className="mt-6">
-        <select
-          value={issueState}
-          onChange={(e) => setIssueState(e.target.value as 'open' | 'closed')}
-          className="p-2 rounded-lg text-gray-300"
+    <div className="text-white min-h-screen bg-gradient-to-b from-gray-900 via-gray-950 to-green-900 flex flex-col">
+      <div className="overflow-hidden max-h-full flex-grow flex flex-col p-4">
+        <Link
+          to={`/?search=${searchTerm}`}
+          className="text-gray-400 hover:text-gray-200 py-2 rounded-md mb-4 px-2 absolute top-4 left-4 border border-gray-600 hover:border-gray-400"
         >
-          <option value="open">Open Issues</option>
-          <option value="closed">Closed Issues</option>
-        </select>
-        {/* <div className="mt-6">
-          <Pie data={pieData} />
-        </div> */}
-        {/* <div className="mt-6">
-          <h2 className="text-2xl font-semibold mb-4">Issues</h2>
-          <ul className="space-y-4">
-            {issues?.map((issue) => (
-              <li key={issue.id} className="p-4 bg-gray-800 rounded-lg shadow-md">
-                <h3 className="text-xl font-semibold">{issue.title}</h3>
-                <p className="text-gray-400">State: {issue.state}</p>
-              </li>
-            ))}
-            {issues?.length === 0 && <p className="text-gray-400">No issues found</p>}
-          </ul>
-        </div> */}
+          Back to Search
+        </Link>
+        <div className="text-center w-full p-6 rounded-lg shadow-lg bg-transparent border border-gray-600 mt-12 mb-4">
+          {repo.html_url ? (
+            <>
+              <h1 className="text-4xl font-bold mb-2">{repo.name} </h1>
+              <p className="text-white mt-2 text-sm">{repo.isPrivate ? "(Private Repository)" : "(Public Repository)"}</p>
+              <p className="text-gray-300">
+                URL: <a href={repo.html_url} target="_blank" rel="noopener noreferrer" className="text-green-500 hover:underline">{repo.html_url}</a>
+              </p>
+              <p className="text-gray-300">Forks: {repo.forks_count}</p>
+              <p className="text-gray-300">Stars: {repo.stargazers_count}</p>
+              <p className="text-gray-300">Open Issues: {repo.open_issues_count}</p>
+            </>
+          ) : (
+            <p className="text-center text-gray-400">Repository details not found</p>
+          )}
+        </div>
+
+        <div className="flex flex-col lg:flex-row gap-4 flex-grow overflow-hidden">
+          <div className="flex-1 p-4 rounded-lg shadow-lg bg-transparent border border-gray-600 flex flex-col">
+            <h2 className="text-3xl font-bold mb-4 text-center">Issues Breakdown</h2>
+            {issuesLoading && (
+              <div className="flex justify-center items-center mt-6">
+                <Loader />
+              </div>
+            )}
+            {issuesError && (
+              <p className="text-center text-red-500 mt-4">Error fetching issues</p>
+            )}
+            {issuesData && issuesData.length > 0 ? (
+              <div className="mt-4">
+                <div className="flex justify-center mb-4">
+                  <div className="flex items-center mr-4">
+                    <div className="w-4 h-4 bg-green-500 mr-2"></div>
+                    <span className="text-sm text-white">Open</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-4 h-4 bg-red-500 mr-2"></div>
+                    <span className="text-sm text-white">Closed</span>
+                  </div>
+                </div>
+                <VictoryPie
+                  data={[
+                    { x: 'Open', y: issuesData.filter((issue: Issue) => issue.state === 'open').length },
+                    { x: 'Closed', y: issuesData.filter((issue: Issue) => issue.state === 'closed').length },
+                  ]}
+                  colorScale={['#4caf50', '#f44336']}
+                  style={{ labels: { fontSize: 12, fill: 'white' } }}
+                  padding={50}
+                  height={200}
+                />
+              </div>
+            ) : (
+              <p className="mt-4 text-center text-gray-400">No issues found</p>
+            )}
+          </div>
+
+
+          {issuesData && issuesData.length > 0 &&
+            <div className="overflow-y-auto max-h-full flex-1 p-4 rounded-lg shadow-lg bg-transparent border border-gray-600 flex flex-col">
+              <div className="flex justify-between mb-4">
+                <button
+                  onClick={() => handleStateChange('open')}
+                  className={`px-4 py-2 rounded-md ${issuesState === 'open' ? 'bg-green-600' : 'bg-gray-700'}`}
+                >
+                  Open Issues
+                </button>
+                <button
+                  onClick={() => handleStateChange('closed')}
+                  className={`px-4 py-2 rounded-md ${issuesState === 'closed' ? 'bg-green-600' : 'bg-gray-700'}`}
+                >
+                  Closed Issues
+                </button>
+              </div>
+              <div className="overflow-y-auto flex-grow">
+                {issuesLoading && <Loader />}
+                {issuesError && <p className="text-center text-red-500">Error fetching issues</p>}
+                {issuesData && (
+                  <ul className="space-y-4">
+                    {issuesData.filter((issue: Issue) => issue.state === issuesState).map((issue: Issue) => (
+                      <li key={issue.id} className="flex p-4 border border-gray-600 rounded-lg shadow-lg hover:border-green-600 cursor-pointer">
+                        <a
+                          href={issue.html_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-white"
+                        >
+                          <h3 className="text-xl font-bold">{issue.title}</h3>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>}
+        </div>
       </div>
     </div>
   );
 }
 
-export default RepositoryDetails;
+export default memo(RepositoryDetail);
