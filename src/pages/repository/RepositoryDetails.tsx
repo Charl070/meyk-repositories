@@ -1,5 +1,5 @@
 import React, { useState, useEffect, memo } from 'react';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import { fetchRepositoryIssues } from '../../api';
 import Loader from '../../components/loader';
@@ -16,7 +16,6 @@ interface Issue {
 
 function RepositoryDetail() {
   const location = useLocation();
-  const navigate = useNavigate();
   const { repositoryDetail, setRepositoryDetail, searchTerm } = useAppContext();
 
   const repo = location.state || repositoryDetail;
